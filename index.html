@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>京东渠道·产品系列推广费看板</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<style>
+  :root {
+    --bg: #f4f6fa; --panel: #ffffff; --panel2: #eef1f6; --line: #e2e7ef;
+    --text: #1e2733; --muted: #69727f; --accent: #2563eb;
+    --good: #16a34a; --bad: #dc2626; --warn: #d97706; --target: #7c3aed;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  #top { padding: 20px 24px 0; }
+  .page-title { font-size: 22px; font-weight: 700; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .updated { font-size:12px; font-weight:400; color:var(--muted); background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:3px 12px; }
+  .page-sub { color: var(--muted); font-size: 12.5px; margin-top: 4px; line-height:1.6; }
+  .filter-wrap { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.94); backdrop-filter: blur(8px); padding: 12px 24px; margin-top: 14px; border-bottom: 1px solid var(--line); }
+  .filter-head { display:flex; align-items:center; gap:12px; margin-bottom:10px; flex-wrap:wrap; }
+  .filter-label { font-size: 13px; font-weight:600; }
+  .filter-hint { font-size: 12px; color: var(--muted); }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip { color: var(--muted); background:var(--panel); border:1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 13px; cursor:pointer; user-select:none; transition: all .15s; display:flex; align-items:center; gap:6px; }
+  .chip:hover { border-color: var(--accent); }
+  .chip .cdot { width:8px; height:8px; border-radius:50%; background: currentColor; opacity:.55; }
+  .chip.on { color:#fff; background: var(--accent); border-color: var(--accent); }
+  .chip.on .cdot { opacity:1; background:#fff; }
+  .chip.overall { font-weight:600; }
+  .chip.notarget { font-style: italic; }
+  .view-row { display:flex; align-items:center; gap:10px; margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); }
+  .view-row .vlabel { font-size:13px; font-weight:600; }
+  .vchip { color: var(--muted); background:var(--panel); border:1px solid var(--line); border-radius: 999px; padding: 6px 18px; font-size: 13px; cursor:pointer; user-select:none; transition:all .15s; }
+  .vchip:hover { border-color: var(--target); }
+  .vchip.on { color:#fff; background: var(--target); border-color: var(--target); }
+  .section { padding: 8px 24px 32px; }
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin: 18px 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .section-name { font-size: 19px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+  .section-name .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+  .mode-tag { font-size:12.5px; color:var(--muted); padding:4px 12px; border:1px solid var(--line); border-radius:999px; }
+  .module { margin-top: 22px; }
+  .module-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; padding-left: 10px; border-left: 3px solid var(--accent); }
+  .module-title small { color: var(--muted); font-weight: 400; margin-left: 8px; font-size: 12px; }
+  .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(16,24,40,0.06); }
+  .card .label { color: var(--muted); font-size: 13px; margin-bottom: 12px; display:flex; align-items:center; gap:7px; }
+  .card .label .cdot { width:9px; height:9px; border-radius:50%; }
+  .card .actual { font-size: 25px; font-weight: 700; }
+  .card .actual .unit { font-size: 13px; color: var(--muted); font-weight: 400; margin-left: 4px; }
+  .card .rows { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+  .card .row { display: flex; justify-content: space-between; font-size: 12.5px; }
+  .card .row .k { color: var(--muted); }
+  .card .row .v { font-weight: 600; }
+  .progress { height: 6px; background: var(--panel2); border-radius: 4px; margin-top: 12px; overflow: hidden; }
+  .progress > i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+  .pos { color: var(--good); } .neg { color: var(--bad); }
+  .charts-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chart-box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; box-shadow: 0 1px 3px rgba(16,24,40,0.06); }
+  .chart { width: 100%; height: 360px; }
+  .chart-note { color: var(--muted); font-size: 12px; margin-top: 8px; padding-left: 2px; }
+  .empty { color: var(--muted); font-size:14px; padding:60px; text-align:center; }
+  @media (max-width: 1100px) { .cards { grid-template-columns: repeat(2, 1fr); } .charts-2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+  <div id="top">
+    <div class="page-title">京东渠道 · 产品系列推广费看板 <span class="updated" id="updated"></span></div>
+    <div class="page-sub" id="pageSub"></div>
+  </div>
+  <div class="filter-wrap" id="filterWrap" style="display:none">
+    <div class="filter-head">
+      <span class="filter-label">产品系列筛选</span>
+      <span class="filter-hint">点击切换产品系列（单选），每个系列显示完整详情</span>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="view-row">
+      <span class="vlabel">时间视角</span>
+      <span class="vchip on" data-view="总览">总览</span>
+      <span class="vchip" data-view="当前月">当前月</span>
+      <span class="filter-hint" id="viewHint"></span>
+    </div>
+  </div>
+  <div id="app"><div class="empty">数据加载中…</div></div>
+
+<script>
+let RAW, DAILY, META, GLOBAL, CUTOFF, CURMONTH, CURMONTH_LABEL, CURDAY, PREV, CUR;
+let BYNAME={}, DBYNAME={};
+
+/* ---------- 工具 ---------- */
+const fmtW = v => v==null?'—':Math.round(v).toLocaleString('zh-CN');
+const fmtPct = v => v==null?'—':(v*100).toFixed(1)+'%';
+const fmtX = v => v==null?'—':(+v).toFixed(2);
+const fmtX1 = v => v==null?'—':(+v).toFixed(1);
+function sumTo(arr,n){ let s=0,any=false; for(let i=0;i<n;i++){ if(arr[i]!=null){s+=arr[i];any=true;} } return any?s:null; }
+function ratioTo(numA,denA,n){ let a=0,d=0; for(let i=0;i<n;i++){ a+=numA[i]||0; d+=denA[i]||0; } return d?a/d:null; }
+function deltaTag(cur,base,higherBetter){
+  if(cur==null||base==null) return '<span class="v">—</span>';
+  const d=cur-base, pc = base!==0 ? d/Math.abs(base)*100 : 0;
+  const good = higherBetter ? d>=0 : d<=0;
+  return `<span class="v ${good?'pos':'neg'}">${d>=0?'▲':'▼'} ${Math.abs(pc).toFixed(1)}%</span>`;
+}
+function deltaPP(cur,base,higherBetter){
+  if(cur==null||base==null) return '<span class="v">—</span>';
+  const dpp=(cur-base)*100;
+  const good = higherBetter ? dpp>=0 : dpp<=0;
+  return `<span class="v ${good?'pos':'neg'}">${dpp>=0?'▲':'▼'} ${Math.abs(dpp).toFixed(1)} PP</span>`;
+}
+
+/* ---------- 派生(总览·月度) ---------- */
+function derive(e){
+  const m=e.m, t=e.target;
+  const c26=m.cost.cur, n26=m.net.cur, c25=m.cost.prev, n25=m.net.prev;
+  const cr26=m.cost_roi.cur, pr26=m.paid_roi.cur, cr25=m.cost_roi.prev, pr25=m.paid_roi.prev;
+  const roiCum=(pA,cA,n)=>{ const p=sumTo(pA,n), c=sumTo(cA,n); return c?p/c:null; };
+  return {
+    name:e.name, target:t,
+    ov:{
+      netGMV:{ actual:sumTo(n26,CUTOFF), y2025:sumTo(n25,12), sp:sumTo(n25,CUTOFF), target:t?t.netGMV:null },
+      cost:{ actual:sumTo(c26,CUTOFF), y2025:sumTo(c25,12), sp:sumTo(c25,CUTOFF), target:t?t.cost:null },
+      nfr:{ actual:ratioTo(c26,n26,CUTOFF), y2025:ratioTo(c25,n25,12), sp:ratioTo(c25,n25,CUTOFF), target:t?t.netFeeRatio:null },
+      roi:{ actual:roiCum(pr26,cr26,CUTOFF), y2025:roiCum(pr25,cr25,12), sp:roiCum(pr25,cr25,CUTOFF) },
+    },
+    nfr26: n26.map((v,i)=> (i<CUTOFF && v) ? c26[i]/v : null),
+    nfr25: n25.map((v,i)=> v ? c25[i]/v : null),
+    roi26: cr26.map((v,i)=> (i<CUTOFF && v) ? pr26[i]/v : null),
+    roi25: cr25.map((v,i)=> v ? pr25[i]/v : null),
+    net26: n26.map((v,i)=> i<CUTOFF ? v : null),
+    cost26: c26.map((v,i)=> i<CUTOFF ? v : null),
+    cumNfrThis: ratioTo(c26,n26,CUTOFF), cumNfrLast: ratioTo(c25,n25,CUTOFF),
+    cumRoiThis: roiCum(pr26,cr26,CUTOFF), cumRoiLast: roiCum(pr25,cr25,CUTOFF),
+    tgtNfr: t?t.netFeeRatio:null,
+  };
+}
+
+/* ---------- ECharts 主题 ---------- */
+const C = { gray:'#64748b', barGray:'#94a3b8', purple:'#7c3aed', blue:'#2563eb', green:'#16a34a', amber:'#d97706' };
+const axisStyle = { axisLine:{lineStyle:{color:'#cbd3df'}}, axisLabel:{color:'#5b6472'}, splitLine:{lineStyle:{color:'#eef1f6'}} };
+const baseGrid = { left: 55, right: 30, top: 54, bottom: 40 };
+const legendStyle = { textStyle:{color:'#33404f'}, top: 8, type:'scroll' };
+const noOverlap = { hideOverlap: true };
+let CHARTS = [];
+function mkChart(id, option){ const el=document.getElementById(id); if(!el) return; const c=echarts.init(el); c.setOption(option); CHARTS.push(c); }
+function clearCharts(){ CHARTS.forEach(c=>c.dispose()); CHARTS=[]; }
+
+/* ================= 总览·详情 ================= */
+function detailCards(d){
+  const o=d.ov;
+  const card = (label,color,big,rows,reach)=>`
+    <div class="card">
+      <div class="label">${color?`<span class="cdot" style="background:${color}"></span>`:''}${label}</div>
+      <div class="actual">${big}</div>
+      <div class="rows">${rows}</div>
+      ${reach!=null?`<div class="progress"><i style="width:${Math.min(reach,100)}%"></i></div>
+        <div class="row" style="margin-top:6px"><span class="k">目标完成率</span><span class="v">${reach.toFixed(1)}%</span></div>`:''}
+    </div>`;
+  const rowsCommon = (ov,fmt,hb,deltaFn)=>`
+    <div class="row"><span class="k">全年目标</span><span class="v">${fmt(ov.target)}</span></div>
+    <div class="row"><span class="k">${PREV}全年</span><span class="v">${fmt(ov.y2025)}</span></div>
+    <div class="row"><span class="k">${PREV}同期</span><span class="v">${fmt(ov.sp)}</span></div>
+    <div class="row"><span class="k">vs ${PREV}同期</span>${(deltaFn||deltaTag)(ov.actual,ov.sp,hb)}</div>`;
+  const netReach = (o.netGMV.target&&o.netGMV.actual!=null)? o.netGMV.actual/o.netGMV.target*100 : null;
+  return `<div class="cards">
+    ${card('净GMV<span class="unit"> 万元</span>',C.blue, fmtW(o.netGMV.actual)+'<span class="unit">万元</span>', rowsCommon(o.netGMV,fmtW,true), netReach)}
+    ${card('费用消耗<span class="unit"> 万元</span>',C.amber, fmtW(o.cost.actual)+'<span class="unit">万元</span>', rowsCommon(o.cost,fmtW,false), null)}
+    ${card('净费G比',C.purple, fmtPct(o.nfr.actual), rowsCommon(o.nfr,fmtPct,false,deltaPP), null)}
+    ${card('ROI<small style="font-weight:400;color:#69727f;font-size:12px"> 不含品牌合约</small>',C.green, fmtX(o.roi.actual),
+      `<div class="row"><span class="k">${PREV}全年</span><span class="v">${fmtX(o.roi.y2025)}</span></div>
+       <div class="row"><span class="k">${PREV}同期</span><span class="v">${fmtX(o.roi.sp)}</span></div>
+       <div class="row"><span class="k">vs ${PREV}同期</span>${deltaTag(o.roi.actual,o.roi.sp,true)}</div>`, null)}
+  </div>`;
+}
+function detailNFR(id,d){
+  const cats=GLOBAL.months.concat(['累计']);
+  const pad=a=>a.concat([null]); const tail=v=>Array(12).fill(null).concat([v]);
+  const tgt = d.tgtNfr!=null ? pad(Array(12).fill(d.tgtNfr)) : null;
+  const pctL=(color,pos)=>({show:true,position:pos,color,fontSize:10,formatter:p=>p.value==null?'':(p.value*100).toFixed(1)+'%'});
+  const series=[
+    {name:'去年同期',type:'line',data:pad(d.nfr25),smooth:true,symbol:'circle',symbolSize:5,lineStyle:{color:C.gray,width:2},itemStyle:{color:C.gray},label:pctL(C.gray,'bottom'),labelLayout:noOverlap},
+    {name:'实际达成',type:'line',data:pad(d.nfr26),smooth:true,symbol:'circle',symbolSize:6,lineStyle:{color:C.blue,width:3},itemStyle:{color:C.blue},label:pctL(C.blue,'top'),labelLayout:noOverlap},
+    {name:'去年同期·累计',type:'bar',data:tail(d.cumNfrLast),barWidth:16,itemStyle:{color:C.barGray},label:{show:true,position:'top',color:C.gray,fontSize:10,formatter:p=>p.value==null?'':(p.value*100).toFixed(1)+'%'}},
+    {name:'今年·累计',type:'bar',data:tail(d.cumNfrThis),barWidth:16,itemStyle:{color:C.green},label:{show:true,position:'top',color:C.green,fontSize:10,formatter:p=>p.value==null?'':(p.value*100).toFixed(1)+'%'}},
+  ];
+  const legend=['去年同期','实际达成','去年同期·累计','今年·累计'];
+  if(tgt){ series.splice(1,0,{name:'今年目标',type:'line',data:tgt,smooth:false,symbol:'none',lineStyle:{color:C.purple,width:2,type:'dashed'},itemStyle:{color:C.purple}}); legend.splice(1,0,'今年目标'); }
+  mkChart(id,{ tooltip:{trigger:'axis',valueFormatter:v=>v==null?'—':(v*100).toFixed(1)+'%'}, legend:{...legendStyle,data:legend}, grid:baseGrid,
+    xAxis:{type:'category',data:cats,...axisStyle}, yAxis:{type:'value',axisLabel:{color:'#5b6472',formatter:v=>(v*100).toFixed(0)+'%'},...axisStyle}, series });
+}
+function detailProgress(id,d){
+  const o=d.ov, netTgt=o.netGMV.target, costTgt=o.cost.target;
+  const cum=arr=>{let s=0;return arr.map(v=>{ if(v==null) return null; s+=v; return s;});};
+  const cumNet=cum(d.net26), cumCost=cum(d.cost26);
+  const netPct = netTgt? cumNet.map(v=>v==null?null:v/netTgt) : Array(12).fill(null);
+  const costPct= costTgt? cumCost.map(v=>v==null?null:v/costTgt): Array(12).fill(null);
+  mkChart(id,{ tooltip:{trigger:'axis',valueFormatter:v=>v==null?'—':(v*100).toFixed(1)+'%'}, legend:{...legendStyle,data:['净GMV进度','费用进度']}, grid:baseGrid,
+    xAxis:{type:'category',data:GLOBAL.months,...axisStyle}, yAxis:{type:'value',min:0,axisLabel:{color:'#5b6472',formatter:v=>(v*100).toFixed(0)+'%'},...axisStyle},
+    series:[
+      {name:'净GMV进度',type:'line',data:netPct,smooth:true,symbol:'circle',symbolSize:5,lineStyle:{color:C.green,width:3},itemStyle:{color:C.green},areaStyle:{color:'rgba(22,163,74,0.08)'},label:{show:true,position:'top',color:C.green,fontSize:10,formatter:pt=>pt.value==null?'':(pt.value*100).toFixed(0)+'%'},labelLayout:noOverlap},
+      {name:'费用进度',type:'line',data:costPct,smooth:true,symbol:'circle',symbolSize:5,lineStyle:{color:C.amber,width:3},itemStyle:{color:C.amber},areaStyle:{color:'rgba(217,119,6,0.08)'},label:{show:true,position:'bottom',color:C.amber,fontSize:10,formatter:pt=>pt.value==null?'':(pt.value*100).toFixed(0)+'%'},labelLayout:noOverlap},
+    ]});
+}
+function detailROI(id,d){
+  const cats=GLOBAL.months.concat(['累计']);
+  const pad=a=>a.concat([null]); const tail=v=>Array(12).fill(null).concat([v]);
+  mkChart(id,{ tooltip:{trigger:'axis',valueFormatter:v=>v==null?'—':(+v).toFixed(2)}, legend:{...legendStyle,data:[PREV+' ROI','实际ROI',PREV+'·累计','今年·累计']}, grid:baseGrid,
+    xAxis:{type:'category',data:cats,...axisStyle}, yAxis:{type:'value',...axisStyle},
+    series:[
+      {name:PREV+' ROI',type:'line',data:pad(d.roi25),smooth:true,symbol:'circle',symbolSize:5,lineStyle:{color:C.gray,width:2},itemStyle:{color:C.gray},label:{show:true,position:'bottom',color:C.gray,fontSize:10,formatter:p=>p.value==null?'':(+p.value).toFixed(1)},labelLayout:noOverlap},
+      {name:'实际ROI',type:'line',data:pad(d.roi26),smooth:true,symbol:'circle',symbolSize:6,lineStyle:{color:C.blue,width:3},itemStyle:{color:C.blue},label:{show:true,position:'top',color:C.blue,fontSize:10,formatter:p=>p.value==null?'':(+p.value).toFixed(1)},labelLayout:noOverlap},
+      {name:PREV+'·累计',type:'bar',data:tail(d.cumRoiLast),barWidth:16,itemStyle:{color:C.barGray},label:{show:true,position:'top',color:C.gray,fontSize:10,formatter:p=>p.value==null?'':(+p.value).toFixed(1)}},
+      {name:'今年·累计',type:'bar',data:tail(d.cumRoiThis),barWidth:16,itemStyle:{color:C.blue},label:{show:true,position:'top',color:C.blue,fontSize:10,formatter:p=>p.value==null?'':(+p.value).toFixed(1)}},
+    ]});
+}
+function renderDetail(entity){
+  const d=derive(entity);
+  document.getElementById('app').innerHTML = `
+   <section class="section">
+    <div class="section-head"><div class="section-name"><span class="dot"></span>${entity.name}</div><span class="mode-tag">总览 · 1月—${CUTOFF}月累计</span></div>
+    <div class="module"><div class="module-title">模块1 · 全年总览 <small>目标 / 实际 / 对比${PREV}</small></div><div id="m1">${detailCards(d)}</div></div>
+    <div class="module"><div class="module-title">模块2 · 分月净费比 <small>去年同期 / ${d.tgtNfr!=null?'今年目标 / ':''}实际 + 累计(截止${CUTOFF}月)</small></div><div class="chart-box"><div id="c2" class="chart"></div></div></div>
+    <div class="module"><div class="charts-2">
+      <div><div class="module-title">模块3 · 净GMV / 费用进度 <small>累计实际 ÷ 全年目标</small></div><div class="chart-box"><div id="c3" class="chart"></div></div>${d.target?'':'<div class="chart-note">该项无全年目标(其他),进度不显示。</div>'}</div>
+      <div><div class="module-title">模块4 · 费用ROI <small>${PREV} / 实际 + 累计 · 不含品牌合约</small></div><div class="chart-box"><div id="c4" class="chart"></div></div></div>
+    </div></div>
+   </section>`;
+  detailNFR('c2',d); detailProgress('c3',d); detailROI('c4',d);
+}
+
+/* ================= 当前月·分日 ================= */
+function deriveDaily(e){
+  const m=e.m, N=CURDAY;
+  const c26=m.cost.cur, n26=m.net.cur, cr26=m.cost_roi.cur, pr26=m.paid_roi.cur;
+  const c25=m.cost.prev, n25=m.net.prev, cr25=m.cost_roi.prev, pr25=m.paid_roi.prev;
+  const sN=a=>{let s=0,any=false;for(let i=0;i<N;i++){if(a[i]!=null){s+=a[i];any=true;}}return any?s:null;};
+  const rN=(a,b)=>{let x=0,y=0;for(let i=0;i<N;i++){x+=a[i]||0;y+=b[i]||0;}return y?x/y:null;};
+  const cut=a=>a.slice(0,N);
+  const roiN=(p,c)=>{const P=sN(p),Cc=sN(c);return Cc?P/Cc:null;};
+  return {
+    name:e.name, days:Array.from({length:N},(_,i)=>`${CURMONTH}/${i+1}`),
+    ov:{ netGMV:{actual:sN(n26),sp:sN(n25)}, cost:{actual:sN(c26),sp:sN(c25)},
+      nfr:{actual:rN(c26,n26),sp:rN(c25,n25)}, roi:{actual:roiN(pr26,cr26),sp:roiN(pr25,cr25)} },
+    nfr26:cut(n26.map((v,i)=>v?c26[i]/v:null)), nfr25:cut(n25.map((v,i)=>v?c25[i]/v:null)),
+    roi26:cut(cr26.map((v,i)=>v?pr26[i]/v:null)), roi25:cut(cr25.map((v,i)=>v?pr25[i]/v:null)),
+    net26:cut(n26), net25:cut(n25), cost26:cut(c26), cost25:cut(c25),
+  };
+}
+function dailyCards(d){
+  const o=d.ov;
+  const card=(label,color,big,rows)=>`<div class="card"><div class="label"><span class="cdot" style="background:${color}"></span>${label}</div><div class="actual">${big}</div><div class="rows">${rows}</div></div>`;
+  const rows=(ov,fmt,hb,dfn)=>`
+    <div class="row"><span class="k">当月累计(1-${CURDAY}日)</span><span class="v">${fmt(ov.actual)}</span></div>
+    <div class="row"><span class="k">${PREV}同期</span><span class="v">${fmt(ov.sp)}</span></div>
+    <div class="row"><span class="k">vs ${PREV}同期</span>${(dfn||deltaTag)(ov.actual,ov.sp,hb)}</div>`;
+  return `<div class="cards">
+    ${card('净GMV<span class="unit"> 万元</span>',C.blue, fmtW(o.netGMV.actual)+'<span class="unit">万元</span>', rows(o.netGMV,fmtW,true))}
+    ${card('费用消耗<span class="unit"> 万元</span>',C.amber, fmtW(o.cost.actual)+'<span class="unit">万元</span>', rows(o.cost,fmtW,false))}
+    ${card('净费G比',C.purple, fmtPct(o.nfr.actual), rows(o.nfr,fmtPct,false,deltaPP))}
+    ${card('ROI<small style="font-weight:400;color:#69727f;font-size:12px"> 不含品牌合约</small>',C.green, fmtX(o.roi.actual), rows(o.roi,fmtX,true))}
+  </div>`;
+}
+function dailyNFR(id,d){
+  mkChart(id,{ tooltip:{trigger:'axis',valueFormatter:v=>v==null?'—':(v*100).toFixed(1)+'%'}, legend:{...legendStyle,data:[PREV+'年'+CURMONTH_LABEL,'今年'+CURMONTH_LABEL]}, grid:baseGrid,
+    xAxis:{type:'category',data:d.days,...axisStyle}, yAxis:{type:'value',axisLabel:{color:'#5b6472',formatter:v=>(v*100).toFixed(0)+'%'},...axisStyle},
+    series:[
+      {name:PREV+'年'+CURMONTH_LABEL,type:'line',data:d.nfr25,smooth:true,symbol:'circle',symbolSize:4,lineStyle:{color:C.gray,width:2},itemStyle:{color:C.gray},label:{show:true,position:'bottom',color:C.gray,fontSize:9,formatter:p=>p.value==null?'':(p.value*100).toFixed(0)+'%'},labelLayout:noOverlap},
+      {name:'今年'+CURMONTH_LABEL,type:'line',data:d.nfr26,smooth:true,symbol:'circle',symbolSize:5,lineStyle:{color:C.blue,width:3},itemStyle:{color:C.blue},label:{show:true,position:'top',color:C.blue,fontSize:9,formatter:p=>p.value==null?'':(p.value*100).toFixed(0)+'%'},labelLayout:noOverlap},
+    ]});
+}
+function dailyAmount(id,d){
+  mkChart(id,{ tooltip:{trigger:'axis',valueFormatter:v=>v==null?'—':Math.round(v).toLocaleString('zh-CN')}, legend:{...legendStyle,data:['净GMV今年','净GMV'+PREV,'费用今年','费用'+PREV]}, grid:{...baseGrid,right:56},
+    xAxis:{type:'category',data:d.days,...axisStyle},
+    yAxis:[ {type:'value',name:'净GMV万',nameTextStyle:{color:'#5b6472'},axisLabel:{color:'#5b6472'},...axisStyle},
+      {type:'value',name:'费用万',position:'right',nameTextStyle:{color:'#5b6472'},axisLabel:{color:'#5b6472'},splitLine:{show:false},axisLine:{lineStyle:{color:'#cbd3df'}}} ],
+    series:[
+      {name:'净GMV今年',type:'bar',yAxisIndex:0,data:d.net26,barWidth:'34%',barGap:'12%',itemStyle:{color:'rgba(37,99,235,0.62)'}},
+      {name:'净GMV'+PREV,type:'bar',yAxisIndex:0,data:d.net25,barWidth:'34%',itemStyle:{color:'#c7d0de'}},
+      {name:'费用今年',type:'line',yAxisIndex:1,data:d.cost26,smooth:true,symbol:'circle',symbolSize:4,lineStyle:{color:C.amber,width:3},itemStyle:{color:C.amber}},
+      {name:'费用'+PREV,type:'line',yAxisIndex:1,data:d.cost25,smooth:true,symbol:'none',lineStyle:{color:'#f0b366',width:2,type:'dashed'},itemStyle:{color:'#f0b366'}},
+    ]});
+}
+function dailyROI(id,d){
+  mkChart(id,{ tooltip:{trigger:'axis',valueFormatter:v=>v==null?'—':(+v).toFixed(2)}, legend:{...legendStyle,data:[PREV+'年'+CURMONTH_LABEL,'今年'+CURMONTH_LABEL]}, grid:baseGrid,
+    xAxis:{type:'category',data:d.days,...axisStyle}, yAxis:{type:'value',...axisStyle},
+    series:[
+      {name:PREV+'年'+CURMONTH_LABEL,type:'line',data:d.roi25,smooth:true,symbol:'circle',symbolSize:4,lineStyle:{color:C.gray,width:2},itemStyle:{color:C.gray},label:{show:true,position:'bottom',color:C.gray,fontSize:9,formatter:p=>p.value==null?'':(+p.value).toFixed(1)},labelLayout:noOverlap},
+      {name:'今年'+CURMONTH_LABEL,type:'line',data:d.roi26,smooth:true,symbol:'circle',symbolSize:5,lineStyle:{color:C.blue,width:3},itemStyle:{color:C.blue},label:{show:true,position:'top',color:C.blue,fontSize:9,formatter:p=>p.value==null?'':(+p.value).toFixed(1)},labelLayout:noOverlap},
+    ]});
+}
+function renderDailyDetail(entity){
+  const d=deriveDaily(DBYNAME[entity.name]||DBYNAME['京东整体']);
+  document.getElementById('app').innerHTML = `
+   <section class="section">
+    <div class="section-head"><div class="section-name"><span class="dot"></span>${entity.name} · ${CURMONTH_LABEL}</div><span class="mode-tag">当前月·分日 1-${CURDAY}日 · 叠加${PREV}同期</span></div>
+    <div class="module"><div class="module-title">模块1 · 当月总览 <small>当月累计(1-${CURDAY}日) / vs${PREV}同期</small></div><div id="m1">${dailyCards(d)}</div></div>
+    <div class="module"><div class="module-title">模块2 · 分日净费比 <small>今年 vs ${PREV}同月</small></div><div class="chart-box"><div id="c2" class="chart"></div></div></div>
+    <div class="module"><div class="charts-2">
+      <div><div class="module-title">模块3 · 分日净GMV与费用 <small>金额 · 今年vs${PREV}</small></div><div class="chart-box"><div id="c3" class="chart"></div></div></div>
+      <div><div class="module-title">模块4 · 分日ROI <small>今年vs${PREV} · 不含品牌合约</small></div><div class="chart-box"><div id="c4" class="chart"></div></div></div>
+    </div></div>
+   </section>`;
+  dailyNFR('c2',d); dailyAmount('c3',d); dailyROI('c4',d);
+}
+
+/* ================= 状态 & 渲染 ================= */
+let selected = '京东整体', view = '总览';
+function render(){
+  clearCharts();
+  const ent = BYNAME[selected] || BYNAME['京东整体'];
+  if(view==='当前月') renderDailyDetail(ent); else renderDetail(ent);
+  syncChips();
+}
+function syncChips(){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c.dataset.name===selected));
+  document.querySelectorAll('.vchip').forEach(c=>c.classList.toggle('on', c.dataset.view===view));
+  const vh=document.getElementById('viewHint');
+  if(vh) vh.textContent = view==='总览' ? `1月—${CUTOFF}月累计` : `${CURMONTH_LABEL} 1-${CURDAY}日 分日`;
+}
+function buildChips(){
+  const wrap=document.getElementById('chips');
+  wrap.innerHTML = RAW.map(e=>{
+    const cls=['chip']; if(e.name==='京东整体') cls.push('overall'); if(!e.target) cls.push('notarget');
+    return `<span class="${cls.join(' ')}" data-name="${e.name}"><span class="cdot"></span>${e.name}${!e.target?' ·无目标':''}</span>`;
+  }).join('');
+  wrap.querySelectorAll('.chip').forEach(c=> c.addEventListener('click',()=>{ selected=c.dataset.name; render(); }));
+}
+
+function init(data){
+  RAW=data.monthly; DAILY=data.daily; META=data.meta;
+  GLOBAL={year:META.curYear, months:META.months};
+  CUTOFF=META.cutoff; CURMONTH=META.curMonth; CURMONTH_LABEL=META.months[CURMONTH-1];
+  CURDAY=META.curDay; PREV=META.prevYear; CUR=META.curYear;
+  BYNAME={}; RAW.forEach(e=>BYNAME[e.name]=e);
+  DBYNAME={}; DAILY.forEach(e=>DBYNAME[e.name]=e);
+  document.getElementById('updated').textContent = '数据更新：'+META.updated+'（至'+META.throughDate+'）';
+  document.getElementById('pageSub').textContent =
+    `${META.curYear} 年度 · 京东渠道 · 按产品系列 · 净费比=费用÷净GMV · ROI=付费成交÷付费花费(不含品牌合约) · 金额单位万元 · 累计口径截止 ${CUTOFF} 月`;
+  document.getElementById('filterWrap').style.display='';
+  buildChips();
+  document.querySelectorAll('.vchip').forEach(c=> c.addEventListener('click',()=>{ view=c.dataset.view; render(); }));
+  render();
+}
+
+fetch('data.json?_='+Date.now()).then(r=>{
+  if(!r.ok) throw new Error('no-data');
+  return r.json();
+}).then(init).catch(()=>{
+  document.getElementById('app').innerHTML = `<div class="empty">暂无数据。数据尚未发布。</div>`;
+});
+window.addEventListener('resize',()=>{ CHARTS.forEach(c=>c.resize()); });
+</script>
+</body>
+</html>
