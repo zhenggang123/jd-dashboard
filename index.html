@@ -7,14 +7,16 @@
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
 <style>
   :root {
-    --bg: #f4f6fa; --panel: #ffffff; --panel2: #eef1f6; --line: #e2e7ef;
+    --bg: #eef1f7; --panel: #ffffff; --panel2: #eef1f6; --line: #e3e8f0;
     --text: #1e2733; --muted: #69727f; --accent: #2563eb;
     --good: #16a34a; --bad: #dc2626; --warn: #d97706; --target: #7c3aed;
+    --board: #f7f9fc;
+    --c-accent: #0d9488; --c-accent2: #0f766e; --c-soft: #f0fdfa; --c-line: #cbebe3; --c-board: #f2fbf9;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
   #top { padding: 20px 24px 0; }
-  .page-title { font-size: 22px; font-weight: 700; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .page-title { font-size: 22px; font-weight: 700; display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding-left:12px; border-left:5px solid var(--accent); }
   .updated { font-size:12px; font-weight:400; color:var(--muted); background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:3px 12px; }
   .page-sub { color: var(--muted); font-size: 12.5px; margin-top: 4px; line-height:1.6; }
   .filter-wrap { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.94); backdrop-filter: blur(8px); padding: 12px 24px; margin-top: 14px; border-bottom: 1px solid var(--line); }
@@ -34,16 +36,17 @@
   .vchip { color: var(--muted); background:var(--panel); border:1px solid var(--line); border-radius: 999px; padding: 6px 18px; font-size: 13px; cursor:pointer; user-select:none; transition:all .15s; }
   .vchip:hover { border-color: var(--target); }
   .vchip.on { color:#fff; background: var(--target); border-color: var(--target); }
-  .section { padding: 8px 24px 32px; }
-  .section-head { display: flex; align-items: center; justify-content: space-between; margin: 18px 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .section { padding: 8px 24px 40px; }
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin: 20px 0 8px; padding: 14px 18px; background: var(--panel); border:1px solid var(--line); border-radius: 14px; box-shadow: 0 1px 2px rgba(16,24,40,0.05); }
   .section-name { font-size: 19px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-  .section-name .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
-  .mode-tag { font-size:12.5px; color:var(--muted); padding:4px 12px; border:1px solid var(--line); border-radius:999px; }
-  .module { margin-top: 22px; }
-  .module-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; padding-left: 10px; border-left: 3px solid var(--accent); }
+  .section-name .dot { width: 10px; height: 10px; border-radius: 3px; background: var(--accent); transform: rotate(45deg); }
+  .mode-tag { font-size:12.5px; color:var(--muted); padding:5px 13px; border:1px solid var(--line); border-radius:999px; background:var(--board); }
+  .module { margin-top: 14px; background: var(--board); border:1px solid var(--line); border-radius: 16px; padding: 16px 16px 18px; }
+  .module-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; padding-left: 11px; border-left: 4px solid var(--accent); letter-spacing:.2px; }
   .module-title small { color: var(--muted); font-weight: 400; margin-left: 8px; font-size: 12px; }
   .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(16,24,40,0.06); }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; box-shadow: 0 1px 2px rgba(16,24,40,0.05); transition: transform .15s, box-shadow .15s; }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,24,40,0.09); }
   .card .label { color: var(--muted); font-size: 13px; margin-bottom: 12px; display:flex; align-items:center; gap:7px; }
   .card .label .cdot { width:9px; height:9px; border-radius:50%; }
   .card .actual { font-size: 25px; font-weight: 700; }
@@ -56,17 +59,39 @@
   .progress > i { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
   .pos { color: var(--good); } .neg { color: var(--bad); }
   .charts-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .chart-box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; box-shadow: 0 1px 3px rgba(16,24,40,0.06); }
+  .chart-box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; box-shadow: none; }
   .chart { width: 100%; height: 360px; }
   .chart-note { color: var(--muted); font-size: 12px; margin-top: 8px; padding-left: 2px; }
   .empty { color: var(--muted); font-size:14px; padding:60px; text-align:center; }
-  @media (max-width: 1100px) { .cards { grid-template-columns: repeat(2, 1fr); } .charts-2 { grid-template-columns: 1fr; } }
+  .pagetabs { display:inline-flex; gap:5px; margin-top:14px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:5px; box-shadow:0 1px 2px rgba(16,24,40,0.05); }
+  .ptab { font-size:13.5px; font-weight:600; color:var(--muted); background:transparent; border:none; border-radius:9px; padding:7px 22px; cursor:pointer; user-select:none; transition:all .15s; }
+  .ptab:hover { color:var(--text); }
+  .ptab.on { color:#fff; background:var(--accent); box-shadow:0 1px 3px rgba(37,99,235,.35); }
+  .ptab.on[data-page="comp"] { background:var(--c-accent); box-shadow:0 1px 3px rgba(13,148,136,.35); }
+  .cardsub { margin-top:6px; color:var(--muted); font-size:12px; }
+  /* 竞品页专属青绿主题 */
+  .comp-theme .module { background: var(--c-board); border-color: var(--c-line); }
+  .comp-theme .module-title { border-left-color: var(--c-accent); }
+  .comp-theme .section-name .dot { background: var(--c-accent); }
+  .comp-theme .mode-tag { color: var(--c-accent2); border-color: var(--c-line); background: var(--c-soft); }
+  .comp-theme .card:hover { box-shadow: 0 8px 20px rgba(13,148,136,0.14); }
+  #compFilterWrap .chip:hover { border-color: var(--c-accent); }
+  #compFilterWrap .chip.on { background: var(--c-accent); border-color: var(--c-accent); }
+  .cat-select { font-size:14px; font-weight:600; color:var(--text); background-color:#fff; border:1px solid var(--c-line); border-radius:10px; padding:10px 40px 10px 16px; cursor:pointer; appearance:none; -webkit-appearance:none; min-width:190px; transition:all .15s; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>"); background-repeat:no-repeat; background-position:right 14px center; }
+  .cat-select:hover, .cat-select:focus { border-color:var(--c-accent); outline:none; box-shadow:0 0 0 3px rgba(13,148,136,.14); }
+  .cards-3 { grid-template-columns: repeat(3, 1fr); }
+  .cards-3 .card { padding: 22px 24px; }
+  @media (max-width: 1100px) { .cards { grid-template-columns: repeat(2, 1fr); } .cards-3 { grid-template-columns: 1fr; } .charts-2 { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
   <div id="top">
     <div class="page-title">京东渠道 · 产品系列推广费看板 <span class="updated" id="updated"></span></div>
     <div class="page-sub" id="pageSub"></div>
+    <div class="pagetabs" id="pageTabs" style="display:none">
+      <span class="ptab on" data-page="own">本品看板</span>
+      <span class="ptab" data-page="comp">竞品数据</span>
+    </div>
   </div>
   <div class="filter-wrap" id="filterWrap" style="display:none">
     <div class="filter-head">
@@ -79,6 +104,13 @@
       <span class="vchip on" data-view="总览">总览</span>
       <span class="vchip" data-view="当前月">当前月</span>
       <span class="filter-hint" id="viewHint"></span>
+    </div>
+  </div>
+  <div class="filter-wrap" id="compFilterWrap" style="display:none">
+    <div class="filter-head">
+      <span class="filter-label">品类</span>
+      <div id="compChips"></div>
+      <span class="filter-hint">对比讯飞自身与该品类两个头部竞品（自营·不含品牌合约）</span>
     </div>
   </div>
   <div id="app"><div class="empty">数据加载中…</div></div>
@@ -301,16 +333,166 @@ function renderDailyDetail(entity){
   dailyNFR('c2',d); dailyAmount('c3',d); dailyROI('c4',d);
 }
 
+/* ================= 竞品数据(本品 vs 竞品) ================= */
+let COMP=[], CBYNAME={}, compSelected=null;
+const COMP_CLS=['搜索竞价类','场景推荐类','智能投放类','CPS类'];
+const CC={ own:'#4f46e5', c1:'#f43f5e', c2:'#f59e0b' };
+const CLSCOLOR={ '搜索竞价类':'#6366f1', '场景推荐类':'#06b6d4', '智能投放类':'#10b981', 'CPS类':'#ec4899' };
+const fmtWc = v => v==null?'—':(Math.abs(v)<100 ? (+v).toFixed(1) : Math.round(v).toLocaleString('zh-CN'));
+
+function mlabel(ym){ const y=ym.slice(2,4), m=+ym.slice(5,7); return y+'/'+m; }
+function ownMonthVal(own, ym, kind){
+  if(!own) return null;
+  const y=+ym.slice(0,4), idx=+ym.slice(5,7)-1, m=own;
+  const pick=arr=> y===CUR?arr.cur[idx] : (y===PREV?arr.prev[idx] : null);
+  if(kind==='cost'){ const v=pick(m.cost); return v>0?v:null; }
+  if(kind==='nfr'){ const c=pick(m.cost), n=pick(m.net); return (n&&n>0)? c/n : null; }
+  if(kind==='roi'){ const p=pick(m.paid_roi), c=pick(m.cost_roi); return (c&&c>0)? p/c : null; }
+  return null;
+}
+function lastIdx(arr){ for(let i=arr.length-1;i>=0;i--){ if(arr[i]!=null) return i; } return -1; }
+function compSeries(cat){
+  const own=cat.own||null;   // 自营口径月度(与竞品同口径)
+  const months=cat.months, b1=cat.brands[0]||null, b2=cat.brands[1]||null;
+  return { cat, own, months, labels:months.map(mlabel), b1, b2,
+    ownCost:months.map(ym=>ownMonthVal(own,ym,'cost')),
+    ownNfr: months.map(ym=>ownMonthVal(own,ym,'nfr')),
+    ownRoi: months.map(ym=>ownMonthVal(own,ym,'roi')),
+    b1Cost:b1?b1.cost['合计']:[], b1Nfr:b1?b1.nfr['合计']:[], b1Roi:b1?b1.roi['合计']:[],
+    b2Cost:b2?b2.cost['合计']:[], b2Nfr:b2?b2.nfr['合计']:[], b2Roi:b2?b2.roi['合计']:[] };
+}
+function cmpTag(a,b,hb){
+  if(a==null||b==null||b===0) return '<span class="v">—</span>';
+  const d=a-b, pc=d/Math.abs(b)*100;
+  let cls=''; if(hb===true) cls=d>=0?'pos':'neg'; else if(hb===false) cls=d<=0?'pos':'neg';
+  return `<span class="v ${cls}">${d>=0?'▲':'▼'} ${Math.abs(pc).toFixed(1)}%</span>`;
+}
+function compCards(s){
+  const idx=Math.max(lastIdx(s.b1Cost), lastIdx(s.b2Cost), lastIdx(s.ownCost));
+  const ml=idx>=0? s.labels[idx] : '—';
+  const n1=s.b1?s.b1.name:'竞品1', n2=s.b2?s.b2.name:'竞品2';
+  const at=a=> idx>=0? a[idx] : null;
+  const card=(label,color,fmt,ov,c1,c2,hb)=>`
+    <div class="card">
+      <div class="label"><span class="cdot" style="background:${color}"></span>${label}<small style="color:var(--muted);font-weight:400;margin-left:6px">${ml}</small></div>
+      <div class="actual" style="color:${CC.own}">${fmt(ov)}</div>
+      <div class="cardsub">讯飞自身</div>
+      <div class="rows">
+        <div class="row"><span class="k" style="color:${CC.c1};font-weight:600">${n1}</span><span class="v">${fmt(c1)}</span></div>
+        <div class="row"><span class="k" style="color:${CC.c2};font-weight:600">${n2}</span><span class="v">${fmt(c2)}</span></div>
+        <div class="row"><span class="k">讯飞 vs ${n1}</span>${cmpTag(ov,c1,hb)}</div>
+      </div>
+    </div>`;
+  return `<div class="cards cards-3">
+    ${card('花费<span class="unit"> 万元</span>',CC.own, v=>fmtWc(v)+(v==null?'':'<span class="unit">万</span>'), at(s.ownCost),at(s.b1Cost),at(s.b2Cost), null)}
+    ${card('净费G比',C.purple, fmtPct, at(s.ownNfr),at(s.b1Nfr),at(s.b2Nfr), false)}
+    ${card('推广ROI',C.green, fmtX, at(s.ownRoi),at(s.b1Roi),at(s.b2Roi), true)}
+  </div>`;
+}
+function compTrend(id, labels, arrs, names, colors, vfmt, yPct, opt){
+  opt=opt||{};
+  const isBar=opt.type==='bar', lfmt=opt.lfmt||(v=>v);
+  const series=arrs.map((a,i)=>{
+    const label={ show:true, position:'top', color:colors[i], fontSize:10, fontWeight:600,
+      formatter:p=>p.value==null?'':lfmt(p.value) };
+    const base={ name:names[i], data:a, itemStyle:{color:colors[i]}, label, labelLayout:{hideOverlap:true} };
+    if(isBar) return {...base, type:'bar', barGap:'6%', barCategoryGap:'40%'};
+    return {...base, type:'line', smooth:true, connectNulls:true, symbol:'circle',
+      symbolSize:i===0?6:5, lineStyle:{color:colors[i], width:i===0?3:2}};
+  });
+  mkChart(id,{ tooltip:{trigger:'axis', valueFormatter:vfmt}, legend:{...legendStyle, data:names}, grid:baseGrid,
+    xAxis:{type:'category', data:labels, ...axisStyle},
+    yAxis:{type:'value', axisLabel:{color:'#5b6472', formatter: yPct?(v=>(v*100).toFixed(0)+'%'):undefined}, ...axisStyle},
+    series });
+}
+function ownClsVal(s, cls, idx){
+  const oc=s.cat.ownCls; if(!oc||idx<0) return null;
+  const ym=s.months[idx], y=+ym.slice(0,4), i=+ym.slice(5,7)-1, a=oc[cls];
+  if(!a) return null;
+  const v = y===CUR?a.cur[i] : (y===PREV?a.prev[i] : null);
+  return (v&&v>0)? v : null;
+}
+function compComposition(id, s){
+  // 分月分组堆叠:每月并排三柱(讯飞/竞品1/竞品2),每柱按4个推广类别堆叠
+  // 柱高=绝对花费(万);数据标签=类别占该柱总花费的百分比;悬停tooltip显示具体费用
+  const ENT=[
+    ['讯飞',            cls=> s.labels.map((_,i)=>ownClsVal(s,cls,i))],
+    [s.b1?s.b1.name:'竞品1', cls=> s.b1? s.b1.cost[cls] : []],
+    [s.b2?s.b2.name:'竞品2', cls=> s.b2? s.b2.cost[cls] : []],
+  ];
+  const entArrs=ENT.map(([ename,get])=>{ const o={}; COMP_CLS.forEach(cls=>o[cls]=get(cls)); return {name:ename,o}; });
+  const totals=entArrs.map(e=> s.labels.map((_,mi)=> COMP_CLS.reduce((a,cls)=> a+((e.o[cls]&&e.o[cls][mi])||0),0)));
+  const pctOf=p=>{ const t=totals[Math.floor(p.seriesIndex/4)][p.dataIndex]; return (t>0&&p.value!=null)? p.value/t*100 : null; };
+  const series=[];
+  entArrs.forEach((e,ei)=> COMP_CLS.forEach(cls=>{
+    series.push({ name:cls, stack:e.name, type:'bar', data:e.o[cls],
+      barGap:'10%', barCategoryGap:'34%', itemStyle:{color:CLSCOLOR[cls]}, emphasis:{focus:'series'},
+      label:{ show:true, position:'inside', color:'#fff', fontSize:10, fontWeight:700,
+        formatter:p=>{ const pc=pctOf(p); return (pc!=null&&pc>=6)? Math.round(pc)+'%':''; } },
+      labelLayout:{hideOverlap:true} });
+  }));
+  mkChart(id,{
+    tooltip:{ trigger:'item', formatter:p=>{ if(p.value==null) return ''; const pc=pctOf(p);
+      return `${entArrs[Math.floor(p.seriesIndex/4)].name} · ${p.seriesName}<br/>花费 <b>${Math.round(p.value).toLocaleString('zh-CN')}</b> 万`+(pc!=null?`　占比 ${pc.toFixed(1)}%`:''); } },
+    legend:{...legendStyle, data:COMP_CLS},
+    grid:{...baseGrid, top:56, right:36},
+    xAxis:{type:'category', data:s.labels, ...axisStyle},
+    yAxis:{type:'value', name:'花费万', nameTextStyle:{color:'#5b6472'}, axisLabel:{color:'#5b6472'}, ...axisStyle},
+    series });
+}
+function renderComp(){
+  const cat=CBYNAME[compSelected]||COMP[0];
+  if(!cat){ document.getElementById('app').innerHTML='<div class="empty">暂无竞品数据。</div>'; return; }
+  const s=compSeries(cat);
+  const n1=s.b1?s.b1.name:'竞品1', n2=s.b2?s.b2.name:'竞品2', names=['讯飞',n1,n2];
+  const noOwn = !s.own ? '<div class="chart-note">该品类无本品对应系列，仅展示竞品。</div>' : '';
+  document.getElementById('app').innerHTML = `
+   <section class="section comp-theme">
+    <div class="section-head"><div class="section-name"><span class="dot"></span>${cat.name} · 本品 vs 竞品</div>
+      <span class="mode-tag">讯飞(自营·不含品牌合约) vs ${n1} / ${n2} · 月度(${s.labels[0]||''}—${s.labels[s.labels.length-1]||''})</span></div>
+    <div class="module"><div class="module-title">模块1 · 最新月对比 <small>讯飞 / ${n1} / ${n2} · 口径:自营·不含品牌合约,本品与竞品对齐</small></div><div id="m1">${compCards(s)}</div>${noOwn}</div>
+    <div class="module"><div class="charts-2">
+      <div><div class="module-title">模块2 · 净费G比趋势 <small>月度 · 越低越好</small></div><div class="chart-box"><div id="c2" class="chart"></div></div></div>
+      <div><div class="module-title">模块3 · 推广ROI趋势 <small>月度 · 越高越好</small></div><div class="chart-box"><div id="c3" class="chart"></div></div></div>
+    </div></div>
+    <div class="module"><div class="module-title">模块4 · 花费趋势 <small>月度 · 万元</small></div><div class="chart-box"><div id="c4" class="chart"></div></div></div>
+    <div class="module"><div class="module-title">模块5 · 推广类别构成对比（分月） <small>每月三柱(左→右)：讯飞 / ${n1} / ${n2} · 柱高=花费万元 · 标签=类别占比%，悬停看费用</small></div>
+      <div class="chart-box"><div id="c5" class="chart" style="height:440px"></div></div>
+      <div class="chart-note">口径映射：快车=搜索竞价 · 京东直投/京易投/购物触点=场景推荐 · 全站营销/京东海投/京速推=智能投放 · 京挑客=CPS</div></div>
+   </section>`;
+  compTrend('c2', s.labels, [s.ownNfr,s.b1Nfr,s.b2Nfr], names, [CC.own,CC.c1,CC.c2], v=>v==null?'—':(v*100).toFixed(1)+'%', true, {lfmt:v=>(v*100).toFixed(1)+'%'});
+  compTrend('c3', s.labels, [s.ownRoi,s.b1Roi,s.b2Roi], names, [CC.own,CC.c1,CC.c2], v=>v==null?'—':(+v).toFixed(2), false, {lfmt:v=>(+v).toFixed(1)});
+  compTrend('c4', s.labels, [s.ownCost,s.b1Cost,s.b2Cost], names, [CC.own,CC.c1,CC.c2], v=>v==null?'—':fmtWc(v), false, {type:'bar', lfmt:v=>fmtWc(v)});
+  compComposition('c5', s);
+}
+function buildCompChips(){
+  const wrap=document.getElementById('compChips');
+  wrap.innerHTML = `<select id="catSelect" class="cat-select">`+
+    COMP.map(c=>`<option value="${c.name}">${c.name}</option>`).join('')+`</select>`;
+  const sel=document.getElementById('catSelect');
+  sel.value=compSelected;
+  sel.addEventListener('change',()=>{ compSelected=sel.value; renderComp(); });
+}
+function syncCompChips(){ const sel=document.getElementById('catSelect'); if(sel) sel.value=compSelected; }
+
 /* ================= 状态 & 渲染 ================= */
-let selected = '京东整体', view = '总览';
+let selected = '京东整体', view = '总览', page = 'own';
 function render(){
   clearCharts();
+  if(page==='comp'){ renderComp(); syncCompChips(); return; }
   const ent = BYNAME[selected] || BYNAME['京东整体'];
   if(view==='当前月') renderDailyDetail(ent); else renderDetail(ent);
   syncChips();
 }
+function switchPage(p){
+  page=p;
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.toggle('on', t.dataset.page===p));
+  document.getElementById('filterWrap').style.display = p==='own'?'':'none';
+  document.getElementById('compFilterWrap').style.display = p==='comp'?'':'none';
+  render();
+}
 function syncChips(){
-  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on', c.dataset.name===selected));
+  document.querySelectorAll('#chips .chip').forEach(c=>c.classList.toggle('on', c.dataset.name===selected));
   document.querySelectorAll('.vchip').forEach(c=>c.classList.toggle('on', c.dataset.view===view));
   const vh=document.getElementById('viewHint');
   if(vh) vh.textContent = view==='总览' ? `1月—${CUTOFF}月累计` : `${CURMONTH_LABEL} 1-${CURDAY}日 分日`;
@@ -331,12 +513,19 @@ function init(data){
   CURDAY=META.curDay; PREV=META.prevYear; CUR=META.curYear;
   BYNAME={}; RAW.forEach(e=>BYNAME[e.name]=e);
   DBYNAME={}; DAILY.forEach(e=>DBYNAME[e.name]=e);
+  COMP = data.comp || []; CBYNAME={}; COMP.forEach(c=>CBYNAME[c.name]=c);
+  compSelected = COMP.length? COMP[0].name : null;
   document.getElementById('updated').textContent = '数据更新：'+META.updated+'（至'+META.throughDate+'）';
   document.getElementById('pageSub').textContent =
     `${META.curYear} 年度 · 京东渠道 · 按产品系列 · 净费比=费用÷净GMV · ROI=付费成交÷付费花费(不含品牌合约) · 金额单位万元 · 累计口径截止 ${CUTOFF} 月`;
   document.getElementById('filterWrap').style.display='';
   buildChips();
   document.querySelectorAll('.vchip').forEach(c=> c.addEventListener('click',()=>{ view=c.dataset.view; render(); }));
+  if(COMP.length){
+    document.getElementById('pageTabs').style.display='';
+    buildCompChips(); syncCompChips();
+    document.querySelectorAll('.ptab').forEach(t=> t.addEventListener('click',()=>switchPage(t.dataset.page)));
+  }
   render();
 }
 
